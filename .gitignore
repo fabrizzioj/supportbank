@@ -24,4 +24,10 @@ dist-ssr
 *.sw?
 /coverage/
 
-.env.local
+# Env files
+.env
+.env.*
+!.env.example
+
+# TypeScript build info
+*.tsbuildinfo
