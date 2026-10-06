@@ -2,32 +2,32 @@ import { Account } from "../models/Account";
 import type { Transaction } from "../models/Transaction";
 
 export class Bank {
-    private readonly accounts = new Map<string, Account>();
+	private readonly accounts = new Map<string, Account>();
 
-    applyAll(transactions: Transaction[]): void {
-        transactions.forEach((t) => this.apply(t));
-    }
+	applyAll(transactions: Transaction[]): void {
+		transactions.forEach((t) => this.apply(t));
+	}
 
-    apply(transaction: Transaction): void {
-        this.getOrCreate(transaction.from).debit(transaction);
-        this.getOrCreate(transaction.to).credit(transaction);
-    }
+	apply(transaction: Transaction): void {
+		this.getOrCreate(transaction.from).debit(transaction);
+		this.getOrCreate(transaction.to).credit(transaction);
+	}
 
-    getAccount(name: string): Account | undefined {
-        return this.accounts.get(name.toLowerCase());
-    }
+	getAccount(name: string): Account | undefined {
+		return this.accounts.get(name.toLowerCase());
+	}
 
-    getAllAccounts(): Account[] {
-        return [...this.accounts.values()];
-    }
+	getAllAccounts(): Account[] {
+		return [...this.accounts.values()];
+	}
 
-    private getOrCreate(name: string): Account {
-        const key = name.toLowerCase();
-        let account = this.accounts.get(key);
-        if (!account) {
-            account = new Account(name);
-            this.accounts.set(key, account);
-        }
-        return account;
-    }
+	private getOrCreate(name: string): Account {
+		const key = name.toLowerCase();
+		let account = this.accounts.get(key);
+		if (!account) {
+			account = new Account(name);
+			this.accounts.set(key, account);
+		}
+		return account;
+	}
 }
