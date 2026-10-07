@@ -9,6 +9,10 @@ lerna-debug.log*
 
 node_modules
 dist
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
 dist-ssr
 *.local
 data

@@ -1,5 +1,6 @@
+import { formatPence } from "../utils/money";
+import { AccountStatus } from "./AccountStatus";
 import type { Transaction } from "./Transaction";
-import {formatPence} from "../utils/money";
 
 export class Account {
 	private balancePence = 0;
@@ -15,10 +16,10 @@ export class Account {
 		return this.transactions;
 	}
 
-	get status(): string {
-		if (this.balancePence < 0) return "owes";
-		if (this.balancePence > 0) return "is owed";
-		return "settled";
+	get status(): AccountStatus {
+		if (this.balancePence < 0) return AccountStatus.Owes;
+		if (this.balancePence > 0) return AccountStatus.IsOwed;
+		return AccountStatus.Settled;
 	}
 
 	credit(transaction: Transaction): void {

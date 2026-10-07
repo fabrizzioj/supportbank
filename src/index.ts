@@ -15,7 +15,9 @@ function loadBank(logger: Logger, view: ConsoleView): Bank {
 	const { transactions, skipped } = new TransactionParser().parse(rows);
 
 	for (const s of skipped) {
-		logger.warn(`Skipped line ${s.lineNumber}: ${s.reason} ${JSON.stringify(s.row)}`);
+		logger.warn(
+			`Skipped line ${s.lineNumber}: ${s.reason} ${JSON.stringify(s.row)}`,
+		);
 	}
 	if (skipped.length > 0) {
 		view.printSkippedRows(skipped.length, LOG_FILE);

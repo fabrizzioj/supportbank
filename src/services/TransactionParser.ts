@@ -44,6 +44,12 @@ export class TransactionParser {
 		if (!isValid(date)) {
 			throw new Error(`invalid date "${row.Date}"`);
 		}
-		return new Transaction(date, row.From, row.To, row.Narrative, toPence(row.Amount));
+		return new Transaction(
+			date,
+			row.From,
+			row.To,
+			row.Narrative,
+			toPence(row.Amount),
+		);
 	}
 }

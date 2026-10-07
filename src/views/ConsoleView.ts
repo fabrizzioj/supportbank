@@ -11,6 +11,15 @@ const ACCOUNT_COLUMNS: Column<Account>[] = [
 	{ header: "Status", value: (a) => a.status },
 ];
 
+const HELP_INDENT = "  ";
+
+const COMMANDS = [
+	{ usage: "List All", description: "show every account and its balance" },
+	{ usage: "List <Name>", description: "show all transactions for an account" },
+	{ usage: "Help", description: "show this list of commands" },
+	{ usage: "Exit", description: "quit" },
+];
+
 export class ConsoleView {
 	printAllAccounts(accounts: Account[]): void {
 		const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
@@ -27,19 +36,23 @@ export class ConsoleView {
 	}
 
 	printHelp(): void {
+		const width = Math.max(...COMMANDS.map((c) => c.usage.length));
 		console.log("Commands:");
-		console.log("  List All        - show every account and its balance");
-		console.log("  List <Name>     - show all transactions for an account");
-		console.log("  Help            - show this list of commands");
-		console.log("  Exit            - quit");
+		for (const c of COMMANDS) {
+			console.log(this.formatCommand(c.usage, c.description, width));
+		}
 	}
 
 	printUnknownCommand(input: string): void {
-		console.log(`Unknown command: "${input}". Type "Help" for a list of commands.`);
+		console.log(
+			`Unknown command: "${input}". Type "Help" for a list of commands.`,
+		);
 	}
 
 	printSkippedRows(count: number, logFile: string): void {
-		console.log(`Warning: skipped ${count} invalid row(s). See ${logFile} for details.`);
+		console.log(
+			`Warning: skipped ${count} invalid row(s). See ${logFile} for details.`,
+		);
 	}
 
 	printError(message: string): void {
@@ -56,10 +69,19 @@ export class ConsoleView {
 			{ header: "To", value: (t) => t.to },
 			{
 				header: "Amount",
-				value: (t) => formatPence(isOutgoing(t) ? -t.amountPence : t.amountPence),
+				value: (t) =>
+					formatPence(isOutgoing(t) ? -t.amountPence : t.amountPence),
 				align: "right",
 			},
 			{ header: "Narrative", value: (t) => t.narrative },
 		];
+	}
+
+	private formatCommand(
+		usage: string,
+		description: string,
+		width: number,
+	): string {
+		return `${HELP_INDENT}${usage.padEnd(width)}  - ${description}`;
 	}
 }
