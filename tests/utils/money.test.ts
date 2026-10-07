@@ -14,6 +14,15 @@ describe("toPence", () => {
     it("throws on non-numeric input", () => {
         expect(() => toPence("abc")).toThrow('Invalid amount: "abc"');
     });
+
+    it("throws on empty or whitespace input", () => {
+        expect(() => toPence("")).toThrow('Invalid amount: ""');
+        expect(() => toPence("   ")).toThrow('Invalid amount: "   "');
+    });
+
+    it("throws on non-finite input", () => {
+        expect(() => toPence("Infinity")).toThrow('Invalid amount: "Infinity"');
+    });
 });
 
 describe("formatPence", () => {
