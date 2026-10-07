@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import type { Account } from "../models/Account";
+import type { SkippedRow } from "../services/TransactionParser";
 import type { Transaction } from "../models/Transaction";
 import { DATE_FORMAT } from "../utils/dateformat";
 import { formatPence } from "../utils/money";
@@ -49,10 +50,19 @@ export class ConsoleView {
 		);
 	}
 
-	printSkippedRows(count: number, logFile: string): void {
-		console.log(
-			`Warning: skipped ${count} invalid row(s). See ${logFile} for details.`,
-		);
+	printSkippedRows(skipped: readonly SkippedRow[]): void {
+		console.log(`${skipped.length} row(s) could not be imported:`);
+		for (const s of skipped) {
+			console.log(`  ${s.source}, line ${s.lineNumber}: ${s.reason}`);
+		}
+	}
+
+	printImportCancelled(): void {
+		console.log("Nothing was imported. Please correct the rows listed above and run SupportBank again.");
+	}
+
+	printFileError(fileName: string, message: string): void {
+		console.error(`Could not read ${fileName}: ${message}. No transactions were imported from it.`);
 	}
 
 	printError(message: string): void {
