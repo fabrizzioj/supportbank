@@ -9,8 +9,8 @@ export class Bank {
 	}
 
 	apply(transaction: Transaction): void {
-		this.getOrCreate(transaction.from).debit(transaction);
-		this.getOrCreate(transaction.to).credit(transaction);
+		this.getOrCreateAccount(transaction.from).debit(transaction);
+		this.getOrCreateAccount(transaction.to).credit(transaction);
 	}
 
 	getAccount(name: string): Account | undefined {
@@ -21,7 +21,7 @@ export class Bank {
 		return [...this.accounts.values()];
 	}
 
-	private getOrCreate(name: string): Account {
+	private getOrCreateAccount(name: string): Account {
 		const key = name.toLowerCase();
 		let account = this.accounts.get(key);
 		if (!account) {

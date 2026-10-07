@@ -3,28 +3,23 @@ import type { Account } from "../models/Account";
 import type { Transaction } from "../models/Transaction";
 import { DATE_FORMAT } from "../utils/dateformat";
 import { formatPence } from "../utils/money";
+import { type Column, formatTable } from "./table";
+
+const ACCOUNT_COLUMNS: Column<Account>[] = [
+	{ header: "Name", value: (a) => a.name },
+	{ header: "Balance", value: (a) => formatPence(a.balance), align: "right" },
+	{ header: "Status", value: (a) => a.status },
+];
 
 export class ConsoleView {
 	printAllAccounts(accounts: Account[]): void {
 		const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
-		const nameWidth = Math.max(...sorted.map((a) => a.name.length), 4);
-
-		console.log(`${"Name".padEnd(nameWidth)}  Balance     Status`);
-		console.log("-".repeat(nameWidth + 28));
-		sorted.forEach((account) => {
-			console.log(
-				`${account.name.padEnd(nameWidth)}  ${formatPence(account.balance).padStart(10)}  ${this.status(account.balance)}`,
-			);
-		});
+		console.log(formatTable(ACCOUNT_COLUMNS, sorted));
 	}
 
 	printAccountHistory(account: Account): void {
-		console.log(
-			`Transactions for ${account.name} (balance ${formatPence(account.balance)}):`,
-		);
-		account.history.forEach((t) =>
-			console.log(this.formatTransaction(t, account)),
-		);
+		console.log(`Transactions for ${account.toString()}`);
+		console.log(formatTable(this.transactionColumns(account), account.history));
 	}
 
 	printAccountNotFound(name: string): void {
@@ -40,21 +35,31 @@ export class ConsoleView {
 	}
 
 	printUnknownCommand(input: string): void {
-		console.log(
-			`Unknown command: "${input}". Type "Help" for a list of commands.`,
-		);
+		console.log(`Unknown command: "${input}". Type "Help" for a list of commands.`);
 	}
 
-	private formatTransaction(t: Transaction, account: Account): string {
-		const isOutgoing = t.from.toLowerCase() === account.name.toLowerCase();
-		const amount = formatPence(isOutgoing ? -t.amountPence : t.amountPence);
-		const counterparty = isOutgoing ? `to ${t.to}` : `from ${t.from}`;
-		return `${format(t.date, DATE_FORMAT)}  ${amount.padStart(9)}  ${counterparty.padEnd(16)}  ${t.narrative}`;
+	printSkippedRows(count: number, logFile: string): void {
+		console.log(`Warning: skipped ${count} invalid row(s). See ${logFile} for details.`);
 	}
 
-	private status(balance: number): string {
-		if (balance < 0) return "owes";
-		if (balance > 0) return "is owed";
-		return "settled";
+	printError(message: string): void {
+		console.error(`Error: ${message}`);
+	}
+
+	private transactionColumns(account: Account): Column<Transaction>[] {
+		const isOutgoing = (t: Transaction): boolean =>
+			t.from.toLowerCase() === account.name.toLowerCase();
+
+		return [
+			{ header: "Date", value: (t) => format(t.date, DATE_FORMAT) },
+			{ header: "From", value: (t) => t.from },
+			{ header: "To", value: (t) => t.to },
+			{
+				header: "Amount",
+				value: (t) => formatPence(isOutgoing(t) ? -t.amountPence : t.amountPence),
+				align: "right",
+			},
+			{ header: "Narrative", value: (t) => t.narrative },
+		];
 	}
 }

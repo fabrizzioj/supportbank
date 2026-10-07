@@ -15,7 +15,7 @@ describe("TransactionParser", () => {
     const parser = new TransactionParser();
 
     it("parses a row into a Transaction", () => {
-        const [t] = parser.parse([row()]);
+        const [t] = parser.parse([row()]).transactions;
 
         expect(t?.date).toEqual(new Date(2014, 0, 4));
         expect(t?.from).toBe("Stephen S");
@@ -25,13 +25,22 @@ describe("TransactionParser", () => {
     });
 
     it("treats dates as day-first", () => {
-        const [t] = parser.parse([row({ Date: "13/02/2014" })]);
+        const [t] = parser.parse([row({ Date: "13/02/2014" })]).transactions;
         expect(t?.date).toEqual(new Date(2014, 1, 13));
     });
 
-    it("reports the CSV line number for an invalid date", () => {
-        expect(() =>
-            parser.parse([row(), row({ Date: "not a date" })]),
-        ).toThrow('Line 3: invalid date "not a date"');
+    it("skips invalid rows and reports their line numbers", () => {
+        const { transactions, skipped } = parser.parse([
+            row(),
+            row({ Date: "not a date" }),
+            row({ Amount: "abc" }),
+            row({ From: "" }),
+        ]);
+
+        expect(transactions).toHaveLength(1);
+        expect(skipped.map((s) => s.lineNumber)).toEqual([3, 4, 5]);
+        expect(skipped[0]?.reason).toBe('invalid date "not a date"');
+        expect(skipped[1]?.reason).toBe('Invalid amount: "abc"');
+        expect(skipped[2]?.reason).toBe("missing From or To");
     });
 });
