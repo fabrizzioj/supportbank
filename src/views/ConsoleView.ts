@@ -35,6 +35,7 @@ export class ConsoleView {
 		console.log("Commands:");
 		console.log("  List All        - show every account and its balance");
 		console.log("  List <Name>     - show all transactions for an account");
+		console.log("  Help            - show this list of commands");
 		console.log("  Exit            - quit");
 	}
 
