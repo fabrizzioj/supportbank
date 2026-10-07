@@ -9,8 +9,13 @@ lerna-debug.log*
 
 node_modules
 dist
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
 dist-ssr
 *.local
+data
 
 # Editor directories and files
 .vscode/*
@@ -24,4 +29,10 @@ dist-ssr
 *.sw?
 /coverage/
 
-.env.local
+# Env files
+.env
+.env.*
+!.env.example
+
+# TypeScript build info
+*.tsbuildinfo
