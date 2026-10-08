@@ -31,6 +31,12 @@ export function makeFakeView() {
 		printAccountNotFound: vi.fn(),
 		printHelp: vi.fn(),
 		printUnknownCommand: vi.fn(),
+		printSkippedRows: vi.fn(),
+		printImportCancelled: vi.fn(),
+		printImported: vi.fn(),
+		printFileError: vi.fn(),
+		printAlreadyImported: vi.fn(),
+		printNoImportableFiles: vi.fn(),
 	};
 	return { fake, view: fake as unknown as ConsoleView };
 }

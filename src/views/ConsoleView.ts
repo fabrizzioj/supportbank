@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import type { Account } from "../models/Account";
-import type { SkippedRow } from "../services/TransactionParser";
 import type { Transaction } from "../models/Transaction";
+import type { SkippedRow } from "../services/TransactionParser";
 import { DATE_FORMAT } from "../utils/dateformat";
 import { formatPence } from "../utils/money";
 import { type Column, formatTable } from "./table";
@@ -17,6 +17,11 @@ const HELP_INDENT = "  ";
 const COMMANDS = [
 	{ usage: "List All", description: "show every account and its balance" },
 	{ usage: "List <Name>", description: "show all transactions for an account" },
+	{
+		usage: "Import File [name]",
+		description:
+			"import a .csv, .json or .xml file from the data folder (leave out the name to pick from a list)",
+	},
 	{ usage: "Help", description: "show this list of commands" },
 	{ usage: "Exit", description: "quit" },
 ];
@@ -51,18 +56,34 @@ export class ConsoleView {
 	}
 
 	printSkippedRows(skipped: readonly SkippedRow[]): void {
-		console.log(`${skipped.length} row(s) could not be imported:`);
+		console.log(`${skipped.length} record(s) could not be imported:`);
 		for (const s of skipped) {
-			console.log(`  ${s.source}, line ${s.lineNumber}: ${s.reason}`);
+			console.log(`  ${s.source}, ${s.location}: ${s.reason}`);
 		}
 	}
 
-	printImportCancelled(): void {
-		console.log("Nothing was imported. Please correct the rows listed above and run SupportBank again.");
+	printImportCancelled(fileName: string): void {
+		console.log(
+			`Nothing was imported from ${fileName}. Please correct the records listed above and import it again.`,
+		);
+	}
+
+	printImported(fileName: string, count: number): void {
+		console.log(`Imported ${count} transactions from ${fileName}.`);
+	}
+
+	printAlreadyImported(fileName: string): void {
+		console.log(`${fileName} has already been imported. Skipping it.`);
+	}
+
+	printNoImportableFiles(folder: string): void {
+		console.log(`No .csv, .json or .xml files found in ${folder}.`);
 	}
 
 	printFileError(fileName: string, message: string): void {
-		console.error(`Could not read ${fileName}: ${message}. No transactions were imported from it.`);
+		console.error(
+			`Could not read ${fileName}: ${message}. No transactions were imported from it.`,
+		);
 	}
 
 	printError(message: string): void {
