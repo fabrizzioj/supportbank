@@ -123,7 +123,9 @@ export class CommandController {
 		}
 
 		const labels = files.map((file) =>
-			this.isImported(this.dataFolder.resolve(file)) ? `${file} (imported)` : file,
+			this.isImported(this.dataFolder.resolve(file))
+				? `${file} (imported)`
+				: file,
 		);
 		const index = keyInSelect(labels, "Choose a file to import:", {
 			guide: false,

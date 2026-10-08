@@ -88,7 +88,9 @@ describe("CommandController.handle", () => {
 
 	it("Import File reports files that cannot be loaded", () => {
 		loader.load.mockImplementation(() => {
-			throw new Error('unsupported file type ".txt" (expected .csv, .json, .xml)');
+			throw new Error(
+				'unsupported file type ".txt" (expected .csv, .json, .xml)',
+			);
 		});
 
 		controller.handle("Import File foo.txt");
@@ -105,13 +107,18 @@ describe("CommandController.handle", () => {
 	});
 
 	it("Import File refuses a file that was already imported", () => {
-		loader.load.mockReturnValue({ transactions: [makeTransaction()], skipped: [] });
+		loader.load.mockReturnValue({
+			transactions: [makeTransaction()],
+			skipped: [],
+		});
 
 		controller.handle("Import File Transactions2013.json");
 		controller.handle("Import File transactions2013.JSON");
 
 		expect(loader.load).toHaveBeenCalledTimes(1);
-		expect(fake.printAlreadyImported).toHaveBeenCalledWith("transactions2013.JSON");
+		expect(fake.printAlreadyImported).toHaveBeenCalledWith(
+			"transactions2013.JSON",
+		);
 	});
 
 	it("Import File allows a retry after a failed import", () => {
