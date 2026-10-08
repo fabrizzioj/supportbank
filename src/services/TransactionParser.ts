@@ -1,18 +1,15 @@
 import { isValid, parse as parseDate } from "date-fns";
 import { getLogger } from "log4js";
+import type { RawRecord } from "../importers/FileImporter";
 import { Transaction } from "../models/Transaction";
-import { DATE_FORMAT } from "../utils/dateformat";
 import { toPence } from "../utils/money";
-import type { CsvRow } from "./CsvReader";
 
 const logger = getLogger("TransactionParser");
 
-const FIRST_DATA_LINE_NUMBER = 2;
-
 export interface SkippedRow {
 	source: string;
-	lineNumber: number;
-	row: CsvRow;
+	location: string;
+	record: RawRecord;
 	reason: string;
 }
 
@@ -22,40 +19,46 @@ export interface ParseResult {
 }
 
 export class TransactionParser {
-	parse(rows: CsvRow[], source: string): ParseResult {
+	parse(records: RawRecord[], source: string, dateFormat: string): ParseResult {
 		const result: ParseResult = { transactions: [], skipped: [] };
 
-		rows.forEach((row, index) => {
-			const lineNumber = index + FIRST_DATA_LINE_NUMBER;
+		for (const record of records) {
 			try {
-				result.transactions.push(this.parseRow(row));
+				result.transactions.push(this.parseRecord(record, dateFormat));
 			} catch (error) {
 				const reason = error instanceof Error ? error.message : String(error);
-				logger.warn(`${source} line ${lineNumber}: ${reason}. Row: ${JSON.stringify(row)}`);
-				result.skipped.push({ source, lineNumber, row, reason });
+				logger.warn(
+					`${source} ${record.location}: ${reason}. Record: ${JSON.stringify(record)}`,
+				);
+				result.skipped.push({
+					source,
+					location: record.location,
+					record,
+					reason,
+				});
 			}
-		});
+		}
 
 		logger.info(
-			`${source}: parsed ${result.transactions.length} transactions, skipped ${result.skipped.length} rows`,
+			`${source}: parsed ${result.transactions.length} transactions, skipped ${result.skipped.length} records`,
 		);
 		return result;
 	}
 
-	private parseRow(row: CsvRow): Transaction {
-		if (!row.From || !row.To) {
+	private parseRecord(record: RawRecord, dateFormat: string): Transaction {
+		if (!record.from || !record.to) {
 			throw new Error("missing From or To");
 		}
-		const date = parseDate(row.Date, DATE_FORMAT, new Date());
+		const date = parseDate(record.date, dateFormat, new Date());
 		if (!isValid(date)) {
-			throw new Error(`invalid date "${row.Date}" (expected ${DATE_FORMAT})`);
+			throw new Error(`invalid date "${record.date}" (expected ${dateFormat})`);
 		}
 		return new Transaction(
 			date,
-			row.From,
-			row.To,
-			row.Narrative,
-			toPence(row.Amount),
+			record.from,
+			record.to,
+			record.narrative,
+			toPence(record.amount),
 		);
 	}
 }

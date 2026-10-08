@@ -2,7 +2,9 @@ const AMOUNT_PATTERN = /^-?\d+(\.\d{1,2})?$/;
 
 export function toPence(amount: string): number {
 	if (!AMOUNT_PATTERN.test(amount)) {
-		throw new Error(`invalid amount "${amount}" (expected a number like 12.34)`);
+		throw new Error(
+			`invalid amount "${amount}" (expected a number like 12.34)`,
+		);
 	}
 	return Math.round(Number(amount) * 100);
 }

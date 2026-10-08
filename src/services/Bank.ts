@@ -1,6 +1,6 @@
+import { getLogger } from "log4js";
 import { Account } from "../models/Account";
 import type { Transaction } from "../models/Transaction";
-import { getLogger } from "log4js";
 
 const logger = getLogger("Bank");
 

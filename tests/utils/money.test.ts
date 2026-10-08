@@ -11,18 +11,18 @@ describe("toPence", () => {
 		expect(toPence("0.29")).toBe(29);
 	});
 
-    it("throws on non-numeric input", () => {
-        expect(() => toPence("abc")).toThrow('invalid amount "abc"');
-    });
+	it("throws on non-numeric input", () => {
+		expect(() => toPence("abc")).toThrow('invalid amount "abc"');
+	});
 
-    it("throws on empty or whitespace input", () => {
-        expect(() => toPence("")).toThrow('invalid amount ""');
-        expect(() => toPence("   ")).toThrow('invalid amount "   "');
-    });
+	it("throws on empty or whitespace input", () => {
+		expect(() => toPence("")).toThrow('invalid amount ""');
+		expect(() => toPence("   ")).toThrow('invalid amount "   "');
+	});
 
-    it("throws on non-finite input", () => {
-        expect(() => toPence("Infinity")).toThrow('invalid amount "Infinity"');
-    });
+	it("throws on non-finite input", () => {
+		expect(() => toPence("Infinity")).toThrow('invalid amount "Infinity"');
+	});
 });
 
 describe("formatPence", () => {
