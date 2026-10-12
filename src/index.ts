@@ -1,50 +1,84 @@
-import { join } from "path";
+import { basename, join } from "path";
+import { getLogger } from "log4js";
+import { keyInYNStrict } from "readline-sync";
 import { CommandController } from "./controllers/CommandController";
+import { configureLogging } from "./logging";
+import type { Transaction } from "./models/Transaction";
 import { Bank } from "./services/Bank";
 import { CsvReader } from "./services/CsvReader";
-import { Logger } from "./services/Logger";
-import { TransactionParser } from "./services/TransactionParser";
+import { type SkippedRow, TransactionParser } from "./services/TransactionParser";
 import { ConsoleView } from "./views/ConsoleView";
 
-const DATA_FILE = join(process.cwd(), "data", "Transactions2014.csv");
-const LOG_FILE = join(process.cwd(), "logs", "supportbank.log");
+const DATA_FILES = ["Transactions2014.csv", "DodgyTransactions2015.csv"].map((file) =>
+	join(process.cwd(), "data", file),
+);
 
-function loadBank(logger: Logger, view: ConsoleView): Bank {
-	logger.info(`Loading ${DATA_FILE}`);
-	const rows = new CsvReader().read(DATA_FILE);
-	const { transactions, skipped } = new TransactionParser().parse(rows);
+const logger = getLogger("index");
 
-	for (const s of skipped) {
-		logger.warn(
-			`Skipped line ${s.lineNumber}: ${s.reason} ${JSON.stringify(s.row)}`,
-		);
+interface LoadResult {
+	transactions: Transaction[];
+	skipped: SkippedRow[];
+	failedFiles: string[];
+}
+
+function loadTransactions(view: ConsoleView): LoadResult {
+	const reader = new CsvReader();
+	const parser = new TransactionParser();
+	const result: LoadResult = { transactions: [], skipped: [], failedFiles: [] };
+
+	for (const file of DATA_FILES) {
+		const fileName = basename(file);
+		try {
+			const parsed = parser.parse(reader.read(file), fileName);
+			result.transactions.push(...parsed.transactions);
+			result.skipped.push(...parsed.skipped);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			logger.error(`Could not load ${file}`, error);
+			view.printFileError(fileName, message);
+			result.failedFiles.push(fileName);
+		}
 	}
-	if (skipped.length > 0) {
-		view.printSkippedRows(skipped.length, LOG_FILE);
+
+	return result;
+}
+
+function confirmPartialImport(result: LoadResult, view: ConsoleView): boolean {
+	if (result.skipped.length === 0 && result.failedFiles.length === 0) {
+		return true;
+	}
+	if (result.skipped.length > 0) {
+		view.printSkippedRows(result.skipped);
 	}
 
-	const bank = new Bank();
-	bank.applyAll(transactions);
-	logger.info(`Loaded ${transactions.length} transactions`);
-	return bank;
+	const proceed = keyInYNStrict(
+		`Import the ${result.transactions.length} valid transactions anyway?`,
+	);
+	logger.info(`User ${proceed ? "accepted" : "declined"} partial import`);
+	return proceed;
 }
 
 function main(): void {
-	const logger = new Logger(LOG_FILE);
-	const view = new ConsoleView();
+	configureLogging();
+	logger.info("SupportBank starting");
 
-	let bank: Bank;
-	try {
-		bank = loadBank(logger, view);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		logger.error(`Failed to load ${DATA_FILE}: ${message}`);
-		view.printError(`Could not load transactions: ${message}`);
+	const view = new ConsoleView();
+	const result = loadTransactions(view);
+
+	if (!confirmPartialImport(result, view)) {
+		view.printImportCancelled();
 		process.exitCode = 1;
+		logger.info("SupportBank shutting down: import cancelled by user");
 		return;
 	}
 
+	const bank = new Bank();
+	bank.applyAll(result.transactions);
+	const accountCount = bank.getAllAccounts().length;
+	logger.info(`Loaded ${result.transactions.length} transactions into ${accountCount} accounts`);
+
 	new CommandController(bank, view).run();
+	logger.info("SupportBank shutting down");
 }
 
 main();

@@ -1,12 +1,16 @@
 import { isValid, parse as parseDate } from "date-fns";
+import { getLogger } from "log4js";
 import { Transaction } from "../models/Transaction";
 import { DATE_FORMAT } from "../utils/dateformat";
 import { toPence } from "../utils/money";
 import type { CsvRow } from "./CsvReader";
 
+const logger = getLogger("TransactionParser");
+
 const FIRST_DATA_LINE_NUMBER = 2;
 
 export interface SkippedRow {
+	source: string;
 	lineNumber: number;
 	row: CsvRow;
 	reason: string;
@@ -18,21 +22,23 @@ export interface ParseResult {
 }
 
 export class TransactionParser {
-	parse(rows: CsvRow[]): ParseResult {
+	parse(rows: CsvRow[], source: string): ParseResult {
 		const result: ParseResult = { transactions: [], skipped: [] };
 
 		rows.forEach((row, index) => {
+			const lineNumber = index + FIRST_DATA_LINE_NUMBER;
 			try {
 				result.transactions.push(this.parseRow(row));
 			} catch (error) {
-				result.skipped.push({
-					lineNumber: index + FIRST_DATA_LINE_NUMBER,
-					row,
-					reason: error instanceof Error ? error.message : String(error),
-				});
+				const reason = error instanceof Error ? error.message : String(error);
+				logger.warn(`${source} line ${lineNumber}: ${reason}. Row: ${JSON.stringify(row)}`);
+				result.skipped.push({ source, lineNumber, row, reason });
 			}
 		});
 
+		logger.info(
+			`${source}: parsed ${result.transactions.length} transactions, skipped ${result.skipped.length} rows`,
+		);
 		return result;
 	}
 
@@ -42,7 +48,7 @@ export class TransactionParser {
 		}
 		const date = parseDate(row.Date, DATE_FORMAT, new Date());
 		if (!isValid(date)) {
-			throw new Error(`invalid date "${row.Date}"`);
+			throw new Error(`invalid date "${row.Date}" (expected ${DATE_FORMAT})`);
 		}
 		return new Transaction(
 			date,

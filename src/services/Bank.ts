@@ -1,5 +1,8 @@
 import { Account } from "../models/Account";
 import type { Transaction } from "../models/Transaction";
+import { getLogger } from "log4js";
+
+const logger = getLogger("Bank");
 
 export class Bank {
 	private readonly accounts = new Map<string, Account>();
@@ -27,6 +30,7 @@ export class Bank {
 		if (!account) {
 			account = new Account(name);
 			this.accounts.set(key, account);
+			logger.debug(`Created account for "${name}"`);
 		}
 		return account;
 	}
